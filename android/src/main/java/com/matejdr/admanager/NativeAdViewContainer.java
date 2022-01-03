@@ -4,6 +4,7 @@ import android.view.View;
 import android.location.Location;
 import android.util.Log;
 import android.os.Bundle;
+import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
 
@@ -35,6 +36,7 @@ import com.google.android.gms.ads.nativead.NativeAd;
 import com.google.android.gms.ads.nativead.NativeAdOptions;
 import com.google.android.gms.ads.nativead.NativeCustomFormatAd;
 import com.google.android.gms.ads.nativead.NativeAdView;
+import com.google.android.gms.ads.nativead.MediaView;
 import com.google.android.gms.ads.nativead.NativeAd.OnNativeAdLoadedListener;
 import com.google.android.gms.ads.formats.OnAdManagerAdViewLoadedListener;
 import com.google.android.gms.ads.nativead.NativeCustomFormatAd.OnCustomFormatAdLoadedListener;
@@ -56,6 +58,7 @@ public class NativeAdViewContainer extends ReactViewGroup implements AppEventLis
     protected AdLoader adLoader;
     protected ReactApplicationContext applicationContext;
     protected NativeAdView nativeAdView;
+    protected NativeAd nativeAd;
     protected AdManagerAdView publisherAdView;
     protected NativeCustomFormatAd nativeCustomTemplateAd;
     protected String nativeCustomTemplateAdClickableAsset;
@@ -95,7 +98,8 @@ public class NativeAdViewContainer extends ReactViewGroup implements AppEventLis
         this.applicationContext = applicationContext;
         this.applicationContext.addLifecycleEventListener(this);
 
-        this.nativeAdView = new NativeAdView(context);
+        this.nativeAd = null;
+        this.nativeAdView = null;
         this.publisherAdView = new AdManagerAdView(context);
 
         mEventEmitter = context.getJSModule(RCTEventEmitter.class);
@@ -119,7 +123,7 @@ public class NativeAdViewContainer extends ReactViewGroup implements AppEventLis
 
         NativeAdOptions adOptions = new NativeAdOptions.Builder()
                 .setVideoOptions(videoOptions)
-                .setAdChoicesPlacement(NativeAdOptions.ADCHOICES_TOP_LEFT)
+                .setAdChoicesPlacement(NativeAdOptions.ADCHOICES_TOP_RIGHT)
                 .build();
 
         ArrayList<AdSize> adSizes = new ArrayList<AdSize>();
@@ -327,7 +331,7 @@ public class NativeAdViewContainer extends ReactViewGroup implements AppEventLis
         }
     }
 
-    public void registerViewsForInteraction(List<View> clickableViews) {
+    public void registerViewsForInteraction(List<View> clickableViews, NativeAdView adView, MediaView mediaView) {
         if (nativeCustomTemplateAd != null && nativeCustomTemplateAdClickableAsset != null) {
             try {
                 for (View view : clickableViews) {
@@ -340,7 +344,7 @@ public class NativeAdViewContainer extends ReactViewGroup implements AppEventLis
                 }
             } catch (Exception e) {
             }
-        } else if (nativeAdView != null) {
+        } else if (adView != null) {
             int viewWidth = this.getMeasuredWidth();
             int viewHeight = this.getMeasuredHeight();
 
@@ -351,38 +355,29 @@ public class NativeAdViewContainer extends ReactViewGroup implements AppEventLis
                 viewHeight = 1500;
             }
 
-            nativeAdView.getLayoutParams().width = viewWidth;
-            nativeAdView.getLayoutParams().height = viewHeight;
-
-            nativeAdView.measure(viewWidth, viewHeight);
-            nativeAdView.layout(left, top, left + viewWidth, top + viewHeight);
-
-            View tmpView = new View(context);
-            tmpView.layout(left, top, left + viewWidth, top + viewHeight);
-            nativeAdView.addView(tmpView);
-
-            tmpView.getLayoutParams().width = viewWidth;
-            tmpView.getLayoutParams().height = viewHeight;
-
-            nativeAdView.setCallToActionView(tmpView);
-
-//            try {
-//                for (View view : clickableViews) {
-//
-//                    ((ViewGroup) view.getParent()).removeView(view);
-//                    nativeAdView.addView(view);
-//                    nativeAdView.setCallToActionView(view);
-//                }
-//            } catch (Exception e) {}
+            Log.w("ifoodie", "? Media view");
+            
+            if (mediaView != null) {
+                mediaView.setMediaContent(this.nativeAd.getMediaContent());
+                // mediaView.setImageScaleType(this.nativeAd.getMediaContent());
+                mediaView.setBackgroundColor(0x00FF00);
+                adView.setBackgroundColor(0xFF0000);
+                this.setBackgroundColor(0x0000FF);
+                adView.setMediaView(mediaView);
+                adView.setCallToActionView(mediaView);
+                Log.w("ifoodie", "✅ Media view");
+                adView.setNativeAd(nativeAd);
+            } else {
+                Log.w("ifoodie", "❌ Media view");
+            }
         }
     }
 
     @Override
     public void onNativeAdLoaded(NativeAd nativeAd) {
-        nativeAdView.setNativeAd(nativeAd);
+        this.nativeAd = nativeAd;
+        Log.w("ifoodie", "Ad Loaded");
         removeAllViews();
-        addView(nativeAdView);
-
         setNativeAd(nativeAd);
     }
 
@@ -514,8 +509,8 @@ public class NativeAdViewContainer extends ReactViewGroup implements AppEventLis
         } else {
             WritableMap icon = Arguments.createMap();
             icon.putString("uri", nativeAd.getIcon().getUri().toString());
-            icon.putInt("width", nativeAd.getIcon().getDrawable().getIntrinsicWidth());
-            icon.putInt("height", nativeAd.getIcon().getDrawable().getIntrinsicHeight());
+            // icon.putInt("width", nativeAd.getIcon().getDrawable().getIntrinsicWidth());
+            // icon.putInt("height", nativeAd.getIcon().getDrawable().getIntrinsicHeight());
             icon.putDouble("scale", nativeAd.getIcon().getScale());
             ad.putMap("icon", icon);
         }
@@ -534,6 +529,8 @@ public class NativeAdViewContainer extends ReactViewGroup implements AppEventLis
             }
             ad.putArray("images", images);
         }
+
+        
 
         Bundle extras = nativeAd.getExtras();
         if (extras.containsKey(FacebookAdapter.KEY_SOCIAL_CONTEXT_ASSET)) {
@@ -628,34 +625,22 @@ public class NativeAdViewContainer extends ReactViewGroup implements AppEventLis
 
     @Override
     public void onHostResume() {
-//        if (this.nativeAdView != null) {
-//            this.nativeAdView.resume();
-//        }
         if (this.publisherAdView != null) {
             this.publisherAdView.resume();
         }
-//        if (this.nativeCustomTemplateAd != null) {
-//            this.nativeCustomTemplateAd.resume();
-//        }
     }
 
     @Override
     public void onHostPause() {
-//        if (this.nativeAdView != null) {
-//            this.nativeAdView.pause();
-//        }
         if (this.publisherAdView != null) {
             this.publisherAdView.pause();
         }
-//        if (this.nativeCustomTemplateAd != null) {
-//            this.nativeCustomTemplateAd.pause();
-//        }
     }
 
     @Override
     public void onHostDestroy() {
-        if (this.nativeAdView != null) {
-            this.nativeAdView.destroy();
+        if (this.nativeAd != null) {
+            this.nativeAd = null;
         }
         if (this.publisherAdView != null) {
             this.publisherAdView.destroy();

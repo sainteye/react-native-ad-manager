@@ -12,8 +12,10 @@ import com.facebook.react.bridge.ReadableNativeArray;
 import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.uimanager.IllegalViewOperationException;
 import com.facebook.react.uimanager.NativeViewHierarchyManager;
+import com.google.android.gms.ads.nativead.NativeAdView;
 import com.facebook.react.uimanager.UIBlock;
 import com.facebook.react.uimanager.UIManagerModule;
+import com.google.android.gms.ads.nativead.MediaView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -87,9 +89,10 @@ public class RNAdManageNativeManager extends ReactContextBaseJavaModule {
         return propertiesMap.get(adUnitID);
     }
 
-
     @ReactMethod
     public void registerViewsForInteraction(final int adTag,
+                                            final int adViewTag,
+                                            final int mediaViewTag,
                                             final ReadableArray clickableViewsTags,
                                             final Promise promise) {
         getReactApplicationContext().getNativeModule(UIManagerModule.class).addUIBlock(new UIBlock() {
@@ -102,6 +105,16 @@ public class RNAdManageNativeManager extends ReactContextBaseJavaModule {
                         nativeAdViewContainer = (NativeAdViewContainer) nativeViewHierarchyManager.resolveView(adTag);
                     }
 
+                    MediaView mediaView = null;
+                    if (mediaViewTag != -1) {
+                        mediaView = (MediaView) nativeViewHierarchyManager.resolveView(mediaViewTag);
+                    }
+
+                    NativeAdView adView = null;
+                    if (adViewTag != -1) {
+                        adView = (NativeAdView) nativeViewHierarchyManager.resolveView(adViewTag);
+                    }
+
                     List<View> clickableViews = new ArrayList<>();
 
                     for (int i = 0; i < clickableViewsTags.size(); ++i) {
@@ -109,7 +122,8 @@ public class RNAdManageNativeManager extends ReactContextBaseJavaModule {
                         clickableViews.add(view);
                     }
 
-                    nativeAdViewContainer.registerViewsForInteraction(clickableViews);
+                    nativeAdViewContainer.registerViewsForInteraction(clickableViews, adView, mediaView);
+                    Log.w("ifoodie", "regist!!" + mediaView.getClass().getSimpleName());
                     promise.resolve(null);
 
                 } catch (ClassCastException e) {

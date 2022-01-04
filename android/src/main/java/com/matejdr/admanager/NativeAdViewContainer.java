@@ -29,6 +29,7 @@ import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.RequestConfiguration;
 import com.google.android.gms.ads.VideoOptions;
+import com.google.android.gms.ads.VideoController.VideoLifecycleCallbacks;
 import com.google.android.gms.ads.admanager.AppEventListener;
 import com.google.android.gms.ads.admanager.AdManagerAdRequest;
 import com.google.android.gms.ads.admanager.AdManagerAdView;
@@ -123,6 +124,7 @@ public class NativeAdViewContainer extends ReactViewGroup implements AppEventLis
 
         NativeAdOptions adOptions = new NativeAdOptions.Builder()
                 .setVideoOptions(videoOptions)
+                .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_LANDSCAPE)
                 .setAdChoicesPlacement(NativeAdOptions.ADCHOICES_TOP_RIGHT)
                 .build();
 
@@ -357,12 +359,20 @@ public class NativeAdViewContainer extends ReactViewGroup implements AppEventLis
 
             if (mediaView != null) {
                 mediaView.setMediaContent(this.nativeAd.getMediaContent());
+                mediaView.setImageScaleType(ImageView.ScaleType.CENTER_CROP);
                 adView.setMediaView(mediaView);
                 adView.setCallToActionView(mediaView);
-                adView.setNativeAd(nativeAd);
             } else {
-                Log.w("ifoodie", "❌ Media view");
+                View tmpView = new View(context);
+                tmpView.layout(0, 0, 0 + viewWidth, 0 + viewHeight);
+                adView.addView(tmpView);
+    
+                tmpView.getLayoutParams().width = viewWidth;
+                tmpView.getLayoutParams().height = viewHeight;
+    
+                adView.setCallToActionView(tmpView);
             }
+            adView.setNativeAd(nativeAd);
         }
     }
 
@@ -522,12 +532,17 @@ public class NativeAdViewContainer extends ReactViewGroup implements AppEventLis
             ad.putArray("images", images);
         }
 
-        
+        if (nativeAd.getAdChoicesInfo() == null) {
+            ad.putBoolean("video", true);
+        } else {
+            ad.putBoolean("video", false);
+        }
 
         Bundle extras = nativeAd.getExtras();
         if (extras.containsKey(FacebookAdapter.KEY_SOCIAL_CONTEXT_ASSET)) {
             String socialContext = (String) extras.get(FacebookAdapter.KEY_SOCIAL_CONTEXT_ASSET);
             ad.putString("socialContext", socialContext);
+            ad.putBoolean("video", true);
         }
 
         sendEvent(RNAdManagerNativeViewManager.EVENT_AD_LOADED, ad);

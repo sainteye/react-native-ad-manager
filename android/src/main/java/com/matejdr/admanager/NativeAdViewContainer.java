@@ -360,9 +360,6 @@ public class NativeAdViewContainer extends ReactViewGroup implements AppEventLis
             if (mediaView != null) {
                 mediaView.setMediaContent(this.nativeAd.getMediaContent());
                 // mediaView.setImageScaleType(this.nativeAd.getMediaContent());
-                mediaView.setBackgroundColor(0x00FF00);
-                adView.setBackgroundColor(0xFF0000);
-                this.setBackgroundColor(0x0000FF);
                 adView.setMediaView(mediaView);
                 adView.setCallToActionView(mediaView);
                 Log.w("ifoodie", "✅ Media view");

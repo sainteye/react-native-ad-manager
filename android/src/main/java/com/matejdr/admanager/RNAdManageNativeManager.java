@@ -123,7 +123,6 @@ public class RNAdManageNativeManager extends ReactContextBaseJavaModule {
                     }
 
                     nativeAdViewContainer.registerViewsForInteraction(clickableViews, adView, mediaView);
-                    Log.w("ifoodie", "regist!!" + mediaView.getClass().getSimpleName());
                     promise.resolve(null);
 
                 } catch (ClassCastException e) {

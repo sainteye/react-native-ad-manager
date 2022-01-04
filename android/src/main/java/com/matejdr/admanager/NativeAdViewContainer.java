@@ -355,14 +355,10 @@ public class NativeAdViewContainer extends ReactViewGroup implements AppEventLis
                 viewHeight = 1500;
             }
 
-            Log.w("ifoodie", "? Media view");
-            
             if (mediaView != null) {
                 mediaView.setMediaContent(this.nativeAd.getMediaContent());
-                // mediaView.setImageScaleType(this.nativeAd.getMediaContent());
                 adView.setMediaView(mediaView);
                 adView.setCallToActionView(mediaView);
-                Log.w("ifoodie", "✅ Media view");
                 adView.setNativeAd(nativeAd);
             } else {
                 Log.w("ifoodie", "❌ Media view");
@@ -373,7 +369,6 @@ public class NativeAdViewContainer extends ReactViewGroup implements AppEventLis
     @Override
     public void onNativeAdLoaded(NativeAd nativeAd) {
         this.nativeAd = nativeAd;
-        Log.w("ifoodie", "Ad Loaded");
         removeAllViews();
         setNativeAd(nativeAd);
     }

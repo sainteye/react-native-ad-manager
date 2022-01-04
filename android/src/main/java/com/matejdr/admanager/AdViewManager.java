@@ -16,7 +16,6 @@ public class AdViewManager extends ViewGroupManager<NativeAdView> {
 
   @Override
   protected NativeAdView createViewInstance(ThemedReactContext reactContext) {
-    Log.w("ifoodie", "init!! AdView");
     return new NativeAdView(reactContext);
   }
 }

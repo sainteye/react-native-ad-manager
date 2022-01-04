@@ -15,7 +15,6 @@ public class MediaViewManager extends SimpleViewManager<MediaView> {
 
   @Override
   protected MediaView createViewInstance(ThemedReactContext reactContext) {
-    Log.w("ifoodie", "init!! MediaView");
     return new MediaView(reactContext);
   }
 }
